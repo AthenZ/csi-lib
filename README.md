@@ -8,6 +8,51 @@
 
 # cert-manager-csi-lib
 
+> ## About this fork (AthenZ/csi-lib)
+>
+> This is AthenZ's fork of [cert-manager/csi-lib](https://github.com/cert-manager/csi-lib).
+> It exists to carry a small patch that upstream does not have yet:
+>
+> - **`issueRenewalTimeout` raised from 60s to 5min** — Athenz ZTS can take longer than
+>   60s to sign a `CertificateRequest`. When the upstream timeout fires the driver
+>   abandons the renewal, and the volume keeps serving the previous certificate until it
+>   expires.
+> - **Diagnostics for slow signing** — logging when a `CertificateRequest` in
+>   `Initializing` is skipped as non-resumable, when signing exceeds 1min, and when the
+>   renewal timeout fires while the request is still `Initializing`.
+>
+> ### How to consume it
+>
+> Pin a **tag**, never a branch, via a `replace` directive:
+>
+> ```
+> replace github.com/cert-manager/csi-lib => github.com/AthenZ/csi-lib v0.12.0-athenz.1
+> ```
+>
+> Tags are named `v<upstream-version>-athenz.<n>`, so `v0.12.0-athenz.1` is upstream
+> `v0.12.0` plus the first revision of the Athenz patch. The upstream base is readable
+> straight from the version string, and the reference is immutable.
+>
+> ### Maintaining the fork
+>
+> `main` tracks upstream and carries the patch on top, so it always shows what the fork
+> changes. To pick up a new upstream release:
+>
+> ```sh
+> git remote add upstream https://github.com/cert-manager/csi-lib.git   # once
+> git fetch upstream --tags
+> git merge v<new-version>          # on main
+> git tag -a v<new-version>-athenz.1 -m "csi-lib v<new-version> + Athenz renewal timeout fix"
+> git push origin main --tags
+> ```
+>
+> Then bump the `replace` directive in the consuming repo
+> ([AthenZ/csi-driver-athenz](https://github.com/AthenZ/csi-driver-athenz)) to the new tag.
+>
+> **This fork should be retired if upstream makes `issueRenewalTimeout` configurable** —
+> at that point the patch becomes unnecessary and the `replace` directive can be dropped.
+
+
 A library for building [CSI drivers](https://kubernetes-csi.github.io/docs/)
 which interact with [cert-manager's](https://github.com/cert-manager/cert-manager)
 CertificateRequest API.
